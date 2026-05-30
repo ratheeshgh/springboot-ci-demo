@@ -1,0 +1,57 @@
+name: Docker Build -> Push -> Deploy ec2
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1 : Checkout the code
+    - name: 1.Checkout code
+      uses: actions/checkout@v6
+
+    - name: 2.Setup java
+      uses: actions/setup-java@v5
+      with:
+            distribution: 'temurin' # See 'Supported distributions' for available options
+            java-version: '21'
+    
+    - name: 3.Build Jar
+      run: 
+          chmod +x ./mvnw
+          ./mvnw clean package -DskipTests
+
+    - name: 4.Login to Docker Hub
+      uses: docker/login-action@v4
+      with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    -  name: 5.Build Docker Image
+       run:  docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/springboot-ci-demo:latest .
+
+    - name: 6.Push Image to Docker Hub
+      run:  docker push ${{ secrets.DOCKERHUB_USERNAME }}/springboot-ci-demo:latest 
+      
+    - name: 7.SSH and Deploy to ec2
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+              # stop
+              docker stop spring-demo
+              # delete image
+              docker rm spring-demo || true
+              # docker pull
+              docker pull ${{ secrets.DOCKERHUB_USERNAME }}/springboot-ci-demo:latest
+              # docker run -d --name spring-demo -p 9090:9090 ${{ secrets.DOCKERHUB_USERNAME }}/springboot-ci-demo:latest
+      
+    
+    
+    
