@@ -51,13 +51,20 @@ jobs:
             sudo usermod -aG docker ec2-user
             sudo docker --version
               # stop
-              docker stop spring-demo
+            sudo docker stop spring-demo
               # delete image
-              docker rm spring-demo || true
+            sudo docker rm spring-demo || true
               # docker pull
-              docker pull ${{ secrets.DOCKERHUB_USERNAME }}/springboot-ci-demo:latest
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/springboot-ci-demo:latest
               # docker run -d --name spring-demo -p 9090:9090 ${{ secrets.DOCKERHUB_USERNAME }}/springboot-ci-demo:latest
-      
+            sudo docker run -d \
+            --name spring-demo \
+            -p 9090:9090 \
+            --restart unless-stopped \
+            ${{ secrets.DOCKERHUB_USERNAME }}/springboot-ci-demo:latest
+
+            # Verify
+            sudo docker ps                            
     
     
     
