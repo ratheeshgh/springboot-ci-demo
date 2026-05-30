@@ -45,7 +45,7 @@ jobs:
         key: ${{ secrets.EC2_SSHKEY }}
         script: |
             sudo yum update -y
-            sudo amazon-linux-extras install docker -y
+            sudo yum install docker -y
             sudo systemctl enable docker
             sudo systemctl start docker
             sudo usermod -aG docker ec2-user
